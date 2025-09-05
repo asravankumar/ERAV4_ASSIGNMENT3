@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Gemini OCR Analysis</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <style>
+        #img-area {
+            position: relative;
+            min-height: 400px;
+        }
+        .bbox {
+            position: absolute;
+            border: 2px solid #0d6efd;
+            background-color: rgba(13, 110, 253, 0.15);
+            pointer-events: none;
+            transition: border 0.2s, background 0.2s;
+        }
+        .bbox.active {
+            border: 3px solid #dc3545;
+            background-color: rgba(220, 53, 69, 0.15);
+            z-index: 99;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <h2 class="mb-4">Gemini OCR Analysis</h2>
+    <form method="POST" enctype="multipart/form-data" class="mb-4">
+        <div class="input-group mb-3">
+            <input class="form-control" type="file" name="image" required>
+            <button class="btn btn-primary" type="submit">Upload Image</button>
+        </div>
+    </form>
+    {% if image_file %}
+    <div class="row">
+        <div class="col-md-7">
+            <div id="img-area" style="width:{{ image_width }}px;height:{{ image_height }}px;">
+                <img id="ocr-img" src="{{ url_for('uploaded_file', filename=image_file) }}"
+                     style="width:100%;height:100%" alt="OCR Image">
+                {% for seg in results %}
+                    <div class="bbox"
+                         id="bbox-{{ loop.index0 }}"
+                         style="left:{{ seg.bounding_box.left }}px;top:{{ seg.bounding_box.top }}px;
+                                width:{{ seg.bounding_box.width }}px;height:{{ seg.bounding_box.height }}px;">
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="col-md-5">
+            <ul class="list-group">
+                {% for seg in results %}
+                <li class="list-group-item list-group-item-action" onclick="highlightBox({{ loop.index0 }})" id="seg-item-{{ loop.index0 }}">
+                    {{ seg.text }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+    function highlightBox(idx) {
+        document.querySelectorAll('.bbox').forEach(e => e.classList.remove('active'));
+        document.querySelectorAll('.list-group-item').forEach(e => e.classList.remove('active'));
+        var box = document.getElementById("bbox-" + idx);
+        if (box) box.classList.add("active");
+        document.getElementById("seg-item-" + idx).classList.add("active");
+    }
+</script>
+</body>
+</html>
