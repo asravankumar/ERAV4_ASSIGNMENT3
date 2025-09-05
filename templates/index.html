@@ -131,6 +131,12 @@
                 {% endfor %}
             </ul>
         </div>
+        {% if summary %}
+            <div class="mt-4 p-3 border rounded shadow-sm bg-white">
+            <h5 class="mb-3">Summary of Extracted Text</h5>
+            <p class="fs-6">{{ summary }}</p>
+            </div>
+        {% endif %}
     </div>
     {% endif %}
 </div>

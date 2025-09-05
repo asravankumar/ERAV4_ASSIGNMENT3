@@ -1,13 +1,14 @@
 from flask import Flask, render_template, request, send_from_directory, jsonify
 from werkzeug.utils import secure_filename
 import os
-from ocr_gemini import ocr_with_gemini
+from ocr_gemini import ocr_with_summary
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "static/uploads"
 app.config["GEMINI_API_KEY"] = os.environ["GEMINI_API_KEY"]
 
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -20,16 +21,14 @@ def index():
         filename = secure_filename(file.filename)
         image_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
         file.save(image_path)
-        results, width, height = ocr_with_gemini(image_path, app.config["GEMINI_API_KEY"])
-        print("results", results)
-        print("width", width)
-        print("height", height)
+        results, width, height, summary = ocr_with_summary(image_path, app.config["GEMINI_API_KEY"])
         return render_template(
             "index.html",
             image_file=filename,
             results=results,
             image_width=width,
-            image_height=height
+            image_height=height,
+            summary=summary
         )
     return render_template("index.html")
 
