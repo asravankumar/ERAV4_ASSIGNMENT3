@@ -13,13 +13,24 @@
             position: absolute;
             border: 2px solid #0d6efd;
             background-color: rgba(13, 110, 253, 0.15);
-            pointer-events: none;
+            pointer-events: auto;
             transition: border 0.2s, background 0.2s;
+            cursor: pointer;
         }
-        .bbox.active {
+        .bbox.active, .bbox:hover {
             border: 3px solid #dc3545;
             background-color: rgba(220, 53, 69, 0.15);
             z-index: 99;
+        }
+        .list-group-item.active, .list-group-item:hover {
+            background-color: #dc3545;
+            color: white;
+            cursor: pointer;
+        }
+        .copy-btn {
+            float: right;
+            font-size: 0.9em;
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -37,21 +48,31 @@
         <div class="col-md-7">
             <div id="img-area" style="width:{{ image_width }}px;height:{{ image_height }}px;">
                 <img id="ocr-img" src="{{ url_for('uploaded_file', filename=image_file) }}"
-                     style="width:100%;height:100%" alt="OCR Image">
+                     alt="OCR Image">
                 {% for seg in results %}
                     <div class="bbox"
                          id="bbox-{{ loop.index0 }}"
                          style="left:{{ seg.bounding_box.left }}px;top:{{ seg.bounding_box.top }}px;
-                                width:{{ seg.bounding_box.width }}px;height:{{ seg.bounding_box.height }}px;">
-                    </div>
+                                width:{{ seg.bounding_box.width }}px;height:{{ seg.bounding_box.height }}px;"
+                         onmouseenter="highlightText({{ loop.index0 }})"
+                         onmouseleave="clearHighlight()"
+                         onclick="highlightBox({{ loop.index0 }})"
+                    ></div>
                 {% endfor %}
             </div>
         </div>
         <div class="col-md-5">
             <ul class="list-group">
                 {% for seg in results %}
-                <li class="list-group-item list-group-item-action" onclick="highlightBox({{ loop.index0 }})" id="seg-item-{{ loop.index0 }}">
+                <li class="list-group-item list-group-item-action"
+                    id="seg-item-{{ loop.index0 }}"
+                    onmouseenter="highlightBox({{ loop.index0 }})"
+                    onmouseleave="clearHighlight()"
+                    onclick="highlightBox({{ loop.index0 }})"
+                >
                     {{ seg.text }}
+                    <button class="btn btn-sm btn-outline-light copy-btn" title="Copy Text"
+                            onclick="copyText(event, '{{ seg.text|e }}')">📋</button>
                 </li>
                 {% endfor %}
             </ul>
@@ -59,13 +80,33 @@
     </div>
     {% endif %}
 </div>
+
 <script>
-    function highlightBox(idx) {
+    function clearHighlight() {
         document.querySelectorAll('.bbox').forEach(e => e.classList.remove('active'));
         document.querySelectorAll('.list-group-item').forEach(e => e.classList.remove('active'));
-        var box = document.getElementById("bbox-" + idx);
+    }
+
+    function highlightBox(idx) {
+        clearHighlight();
+        let box = document.getElementById("bbox-" + idx);
+        let item = document.getElementById("seg-item-" + idx);
         if (box) box.classList.add("active");
-        document.getElementById("seg-item-" + idx).classList.add("active");
+        if (item) item.classList.add("active");
+    }
+
+    function highlightText(idx) {
+        clearHighlight();
+        highlightBox(idx);
+    }
+
+    function copyText(event, text) {
+        event.stopPropagation();  // Prevent triggering other click events
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Copied: ' + text);
+        }).catch(err => {
+            alert('Failed to copy text: ' + err);
+        });
     }
 </script>
 </body>
